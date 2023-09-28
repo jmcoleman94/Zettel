@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 
 export type TODO = {
   id?: number;
@@ -8,16 +9,29 @@ export type TODO = {
   status: number;
 };
 
-export function connect() {
-  return Database(
-    path.join(__dirname, '../../../', 'release/app', 'database.db'),
-    { verbose: console.log, fileMustExist: true },
-  );
+const db = Database(
+  path.join(__dirname, '../../../', 'release/app', 'database.db'),
+  { verbose: console.log },
+);
+
+export function migrate() {
+  dbExecFile('../../db/init.sql');
+  //fs
+}
+
+function dbExecFile(path: string) {
+  db.exec(fs.readFileSync(path, 'utf8'));
+}
+
+export function index() {
+
+}
+
+export function close() {
+  db.close();
 }
 
 export function insertTODO(todo: TODO) {
-  const db = connect();
-
   const stm = db.prepare(
     'INSERT INTO todos (title, date, status) VALUES (@title, @date, @status)',
   );
@@ -26,7 +40,6 @@ export function insertTODO(todo: TODO) {
 }
 
 export function updateTODO(todo: TODO) {
-  const db = connect();
   const { title, status, id } = todo;
 
   const stm = db.prepare(
@@ -37,24 +50,18 @@ export function updateTODO(todo: TODO) {
 }
 
 export function deleteTODO(id: number) {
-  const db = connect();
-
   const stm = db.prepare('DELETE FROM todos WHERE id = @id');
 
   stm.run({ id });
 }
 
 export function getAllTODO() {
-  const db = connect();
-
   const stm = db.prepare('SELECT * FROM todos');
 
   return stm.all() as TODO[];
 }
 
 export function getOneTODO(id: number) {
-  const db = connect();
-
   const stm = db.prepare('SELECT * FROM todos where id = @id');
 
   return stm.get({ id }) as TODO;
