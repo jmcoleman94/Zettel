@@ -21,6 +21,7 @@ import {
   insertTODO,
   updateTODO,
   TODO,
+  migrate,
 } from './services/Database.service';
 
 class AppUpdater {
@@ -31,6 +32,15 @@ class AppUpdater {
   }
 }
 
+const RESOURCES_PATH = app.isPackaged
+? path.join(process.resourcesPath, 'assets')
+: path.join(__dirname, '../../assets');
+
+const getAssetPath = (...paths: string[]): string => {
+  return path.join(RESOURCES_PATH, ...paths);
+};
+
+let splash: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 
 ipcMain.on('ipc-example', async (event, arg) => {
@@ -69,14 +79,6 @@ const createWindow = async () => {
     await installExtensions();
   }
 
-  const RESOURCES_PATH = app.isPackaged
-    ? path.join(process.resourcesPath, 'assets')
-    : path.join(__dirname, '../../assets');
-
-  const getAssetPath = (...paths: string[]): string => {
-    return path.join(RESOURCES_PATH, ...paths);
-  };
-
   mainWindow = new BrowserWindow({
     show: false,
     width: 1024,
@@ -98,6 +100,10 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
+      if(splash != null) {
+        splash.close();
+        splash = null;
+      }
       mainWindow.show();
     }
   });
@@ -135,6 +141,20 @@ app.on('window-all-closed', () => {
 app
   .whenReady()
   .then(() => {
+
+    splash = new BrowserWindow({
+      width: 500,
+      height: 300,
+      transparent: true,
+      frame: false,
+      alwaysOnTop: true
+    });
+
+    splash.loadFile(path.join(__dirname, 'splash.html'));
+    splash.center();
+
+    migrate();
+
     ipcMain.handle('todo:insert', async (_, todo: TODO) => {
       insertTODO(todo);
     });
@@ -150,7 +170,9 @@ app
     ipcMain.handle('todo:getAll', async () => {
       return getAllTODO();
     });
-    createWindow();
+    setTimeout(function () {
+      createWindow();
+    }, 5000);
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.

@@ -15,10 +15,10 @@ const db = Database(
 );
 
 export function migrate() {
-  dbExecFile('../../db/init.sql');
+  dbExecFile(path.join(__dirname, '../../db/init.sql'));
 
   var nextRevision = getLastRevision() + 1;
-  console.log('attempting migration from revision ' + nextRevision)
+  console.log(`attempting migration from revision ${nextRevision}`)
   while(fs.existsSync(getRevisionPath(nextRevision))) {
     console.log('executing revision ' + nextRevision)
     startRevision(nextRevision, 'revision')
@@ -29,25 +29,26 @@ export function migrate() {
 }
 
 function getRevisionPath(revision: number) : string {
-  return './../db/revisions/' + revision + '.sql'
+  return path.join(__dirname, `../../db/revisions/${revision}.sql`)
 }
 
-function startRevision(revision: number, description: string) {
+function startRevision(revisionNo: number, description: string) {
   const stm = db.prepare('INSERT INTO MIGRATION (REVISION, DESCRIPTION, STARTED)' +
-    'VALUES (@revision, @description, CURRENT_TIMESTAMP)');
+    'VALUES (@revisionNo, @description, CURRENT_TIMESTAMP)');
 
-  stm.run({ revision, description });
+  stm.run({ revisionNo, description });
 }
 
-function completeRevision(revision: number) {
-  const stm = db.prepare('UPDATE MIGRATION SET COMPLETED = CURRENT_TIMESTAMP WHERE REVISION = @revision');
+function completeRevision(revisionNo: number) {
+  const stm = db.prepare('UPDATE MIGRATION SET COMPLETED = CURRENT_TIMESTAMP WHERE REVISION = @revisionNo');
 
-  stm.run(revision);
+  stm.run({ revisionNo });
 }
 
 function getLastRevision() : number {
-  const stm = db.prepare('SELECT MAX(REVISION) FROM MIGRATION')
-  return stm.get() as number
+  type revision = { LASTREVISION: number }
+  const stm = db.prepare('SELECT MAX(REVISION) LASTREVISION FROM (SELECT REVISION FROM MIGRATION UNION SELECT 0)')
+  return (stm.get() as revision).LASTREVISION
 }
 
 function dbExecFile(path: string) {
