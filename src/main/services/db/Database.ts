@@ -3,12 +3,12 @@ import path from 'path';
 import fs from 'fs';
 
 export const db = Database(
-  path.join(__dirname, '../../../', 'release/app', 'database.db'),
+  path.join(__dirname, '../../../../', 'release/app', 'database.db'),
   { verbose: console.log },
 );
 
 export function migrate() {
-  dbExecFile(path.join(__dirname, '../../db/init.sql'));
+  dbExecFile(path.join(__dirname, '../../../db/init.sql'));
 
   var nextRevision = getLastRevision() + 1;
   console.log(`attempting migration from revision ${nextRevision}`)
@@ -22,7 +22,7 @@ export function migrate() {
 }
 
 function getRevisionPath(revision: number) : string {
-  return path.join(__dirname, `../../db/revisions/${revision}.sql`)
+  return path.join(__dirname, `../../../db/revisions/${revision}.sql`)
 }
 
 function startRevision(revisionNo: number, description: string) {

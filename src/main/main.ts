@@ -14,15 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import {
-  deleteTODO,
-  getAllTODO,
-  getOneTODO,
-  insertTODO,
-  updateTODO,
-  TODO,
-  migrate,
-} from './services/Database.service';
+import { DatabaseContext, TODO } from './services/Database.service';
 
 class AppUpdater {
   constructor() {
@@ -42,6 +34,7 @@ const getAssetPath = (...paths: string[]): string => {
 
 let splash: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
+let dbContext: DatabaseContext;
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -153,22 +146,24 @@ app
     splash.loadFile(path.join(__dirname, 'splash.html'));
     splash.center();
 
-    migrate();
+    dbContext = new DatabaseContext()
+
+    dbContext.migrateDb();
 
     ipcMain.handle('todo:insert', async (_, todo: TODO) => {
-      insertTODO(todo);
+      dbContext.ToDo().insertTODO(todo);
     });
     ipcMain.handle('todo:update', async (_, todo: TODO) => {
-      updateTODO(todo);
+      dbContext.ToDo().updateTODO(todo);
     });
     ipcMain.handle('todo:delete', async (_, id: number) => {
-      deleteTODO(id);
+      dbContext.ToDo().deleteTODO(id);
     });
     ipcMain.handle('todo:getOne', async (_, id: number) => {
-      return getOneTODO(id);
+      return dbContext.ToDo().getOneTODO(id);
     });
     ipcMain.handle('todo:getAll', async () => {
-      return getAllTODO();
+      return dbContext.ToDo().getAllTODO();
     });
     setTimeout(function () {
       createWindow();

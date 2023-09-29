@@ -1,50 +1,31 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import {db, migrate} from './db/database'
+import {WorkspaceContext} from './db/workspace'
+import { TodoContext } from './db/todo';
 
-export type TODO = {
-  id?: number;
-  title: string;
-  date: string;
-  status: number;
-};
+export { TODO } from './db/todo';
 
-export function index() {
+export class DatabaseContext {
+  private workspace: WorkspaceContext;
+  private todo: TodoContext;
 
-}
+  constructor() {
+    this.workspace = new WorkspaceContext(db)
+    this.todo = new TodoContext(db)
+  }
 
-export function insertTODO(todo: TODO) {
-  const stm = db.prepare(
-    'INSERT INTO todos (title, date, status) VALUES (@title, @date, @status)',
-  );
+  Workspace() : WorkspaceContext {
+    return this.workspace;
+  }
 
-  stm.run(todo);
-}
+  ToDo() : TodoContext {
+    return this.todo
+  }
 
-export function updateTODO(todo: TODO) {
-  const { title, status, id } = todo;
+  migrateDb() {
+    migrate()
+  }
 
-  const stm = db.prepare(
-    'UPDATE todos SET title = @title, status = @status WHERE id = @id',
-  );
+  index() {
 
-  stm.run({ title, status, id });
-}
-
-export function deleteTODO(id: number) {
-  const stm = db.prepare('DELETE FROM todos WHERE id = @id');
-
-  stm.run({ id });
-}
-
-export function getAllTODO() {
-  const stm = db.prepare('SELECT * FROM todos');
-
-  return stm.all() as TODO[];
-}
-
-export function getOneTODO(id: number) {
-  const stm = db.prepare('SELECT * FROM todos where id = @id');
-
-  return stm.get({ id }) as TODO;
+  }
 }

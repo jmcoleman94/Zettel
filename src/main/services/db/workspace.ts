@@ -1,4 +1,4 @@
-import {db} from './Database'
+import {Database} from 'better-sqlite3';
 
 export type Workspace = {
   id?: number,
@@ -7,14 +7,20 @@ export type Workspace = {
   indexed?: Date
 };
 
-export namespace ZettelDb {
+export class WorkspaceContext {
 
-  export function createWorkspace(directory: string) : Workspace {
+  db: Database;
 
-    const insert = db.prepare('INSERT INTO WORKSPACE (DIRECTORY) VALUES (@directory)')
+  constructor(db: Database) {
+    this.db = db;
+  }
+
+  createWorkspace(directory: string) : Workspace {
+
+    const insert = this.db.prepare('INSERT INTO WORKSPACE (DIRECTORY) VALUES (@directory)')
     let result = insert.run({ directory })
 
-    const fetch = db.prepare('SELECT * FROM WORKSPACE WHERE ID = @rowId')
+    const fetch = this.db.prepare('SELECT * FROM WORKSPACE WHERE ID = @rowId')
     let workspace = fetch.get({ rowId: result.lastInsertRowid }) as Workspace
 
     return workspace
