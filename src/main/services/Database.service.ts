@@ -16,7 +16,38 @@ const db = Database(
 
 export function migrate() {
   dbExecFile('../../db/init.sql');
-  //fs
+
+  var nextRevision = getLastRevision() + 1;
+  console.log('attempting migration from revision ' + nextRevision)
+  while(fs.existsSync(getRevisionPath(nextRevision))) {
+    console.log('executing revision ' + nextRevision)
+    startRevision(nextRevision, 'revision')
+    dbExecFile(getRevisionPath(nextRevision));
+    completeRevision(nextRevision)
+    nextRevision++;
+  }
+}
+
+function getRevisionPath(revision: number) : string {
+  return './../db/revisions/' + revision + '.sql'
+}
+
+function startRevision(revision: number, description: string) {
+  const stm = db.prepare('INSERT INTO MIGRATION (REVISION, DESCRIPTION, STARTED)' +
+    'VALUES (@revision, @description, CURRENT_TIMESTAMP)');
+
+  stm.run({ revision, description });
+}
+
+function completeRevision(revision: number) {
+  const stm = db.prepare('UPDATE MIGRATION SET COMPLETED = CURRENT_TIMESTAMP WHERE REVISION = @revision');
+
+  stm.run(revision);
+}
+
+function getLastRevision() : number {
+  const stm = db.prepare('SELECT MAX(REVISION) FROM MIGRATION')
+  return stm.get() as number
 }
 
 function dbExecFile(path: string) {
