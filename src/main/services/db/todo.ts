@@ -1,4 +1,5 @@
 import {Database} from 'better-sqlite3';
+import { promisify } from 'util';
 
 export type TODO = {
   id?: number;
@@ -26,8 +27,10 @@ export class TodoContext {
 
   }
 
-  getAllTODO() : TODO[] {
-    return [];
+  getAllTODO(): Promise<TODO[]> {
+    return new Promise<TODO[]>((resolve) => {
+      resolve([]);
+    });
   }
 
   getOneTODO(id: number) : TODO {

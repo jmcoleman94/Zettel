@@ -9,8 +9,8 @@ export default function appRoutes() {
     <MemoryRouter>
       <Routes>
         <Route path="/" Component={Home} />
-        <Route path="/Page1" Component={Page1} />
-        <Route path="/Page2" Component={Page2} />
+        <Route path="Page1" Component={Page1} />
+        <Route path="/Page2.html" Component={Page2} />
       </Routes>
     </MemoryRouter>
   );
