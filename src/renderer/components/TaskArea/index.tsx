@@ -22,6 +22,7 @@ export default function TaskArea({
 }) {
   return (
     <div className={styles.container}>
+      <h2>Home</h2>
       {todos.map((todo) => (
         <TaskItem
           checked={todo.status === 1 ? true : false}

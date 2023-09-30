@@ -23,6 +23,7 @@ const electronHandler = {
       ipcRenderer.once(channel, (_event, ...args) => func(...args));
     },
   },
+  nav:(page: string) => ipcRenderer.invoke('nav:nav', page),
   insertTODO: (todo: TODO) => ipcRenderer.invoke('todo:insert', todo),
   deleteTODO: (id: number) => ipcRenderer.invoke('todo:delete', id),
   getAllTODO: () => ipcRenderer.invoke('todo:getAll'),

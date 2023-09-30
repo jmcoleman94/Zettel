@@ -156,6 +156,9 @@ app
 
     await initDb();
 
+    ipcMain.handle('nav:nav', async(_, page: string) => {
+      mainWindow?.loadURL(resolveHtmlPath(page));
+    });
     ipcMain.handle('todo:insert', async (_, todo: TODO) => {
       dbContext.ToDo().insertTODO(todo);
     });
