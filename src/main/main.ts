@@ -14,7 +14,7 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-import { DatabaseContext, TODO } from './services/Database.service';
+import { DatabaseContext, TODO, Workspace } from './services/Database.service';
 
 class AppUpdater {
   constructor() {
@@ -25,8 +25,8 @@ class AppUpdater {
 }
 
 const RESOURCES_PATH = app.isPackaged
-? path.join(process.resourcesPath, 'assets')
-: path.join(__dirname, '../../assets');
+  ? path.join(process.resourcesPath, 'assets')
+  : path.join(__dirname, '../../assets');
 
 const getAssetPath = (...paths: string[]): string => {
   return path.join(RESOURCES_PATH, ...paths);
@@ -35,6 +35,7 @@ const getAssetPath = (...paths: string[]): string => {
 let splash: BrowserWindow | null = null;
 let mainWindow: BrowserWindow | null = null;
 let dbContext: DatabaseContext;
+let activeWorkspace: Workspace;
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -93,7 +94,7 @@ const createWindow = async () => {
     if (process.env.START_MINIMIZED) {
       mainWindow.minimize();
     } else {
-      if(splash != null) {
+      if (splash != null) {
         splash.close();
         splash = null;
       }
@@ -131,24 +132,29 @@ app.on('window-all-closed', () => {
   }
 });
 
+const initDb = async () => {
+  dbContext = new DatabaseContext();
+
+  dbContext.migrateDb();
+
+  activeWorkspace = dbContext.Workspace().getActiveWorkspace();
+};
+
 app
   .whenReady()
-  .then(() => {
-
+  .then(async () => {
     splash = new BrowserWindow({
       width: 500,
       height: 300,
       transparent: true,
       frame: false,
-      alwaysOnTop: true
+      alwaysOnTop: true,
     });
 
     splash.loadFile(path.join(__dirname, 'splash.html'));
     splash.center();
 
-    dbContext = new DatabaseContext()
-
-    dbContext.migrateDb();
+    await initDb();
 
     ipcMain.handle('todo:insert', async (_, todo: TODO) => {
       dbContext.ToDo().insertTODO(todo);
@@ -165,9 +171,10 @@ app
     ipcMain.handle('todo:getAll', async () => {
       return dbContext.ToDo().getAllTODO();
     });
-    setTimeout(function () {
-      createWindow();
-    }, 5000);
+    ipcMain.handle('workspace:getActive', async () => {
+      return activeWorkspace;
+    });
+    createWindow();
     app.on('activate', () => {
       // On macOS it's common to re-create a window in the app when the
       // dock icon is clicked and there are no other windows open.

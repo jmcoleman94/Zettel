@@ -28,6 +28,7 @@ const electronHandler = {
   getAllTODO: () => ipcRenderer.invoke('todo:getAll'),
   getOneTODO: (id: number) => ipcRenderer.invoke('todo:getOne', id),
   updateTODO: (todo: TODO) => ipcRenderer.invoke('todo:update', todo),
+  getActiveWorkspace: () => ipcRenderer.invoke('workspace:getActive'),
 };
 
 contextBridge.exposeInMainWorld('electron', electronHandler);
